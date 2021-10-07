@@ -1,0 +1,63 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: chat
+  namespace: default
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: chat
+
+  template:
+    metadata:
+      labels:
+        app: chat
+    spec:
+      containers:
+      - name: phoenix-chat
+        image: phoenix-chat:v1.2
+        ports:
+        - containerPort: 4000
+        env:
+        - name: PORT
+          value: "4000"
+        - name: MY_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        command: ["elixir"]
+        args: ["--name", "chat@$(MY_POD_IP)", "--cookie","secret", "--no-halt", "-S","mix","phx.server"]
+---
+kind: Service
+apiVersion: v1
+
+metadata:
+  name: chat
+  namespace: default
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+
+spec:
+  type: LoadBalancer
+  selector:
+    app: chat
+  ports:
+    - name: http
+      port: 80
+      targetPort: 4000
+
+---
+kind: Service
+apiVersion: v1
+
+metadata:
+  name: chat-svc
+  namespace: default
+spec:
+  clusterIP: None
+  selector:
+    app: chat
+  ports:
+    - name: epmd
+      port: 4369

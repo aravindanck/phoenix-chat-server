@@ -6,7 +6,24 @@ defmodule Chat.Application do
   use Application
 
   def start(_type, _args) do
+    topologies = [
+      k8s_chat: [
+        strategy: Cluster.Strategy.Kubernetes.DNS,
+        config: [
+          service: "chat-svc",
+          application_name: "chat"
+        ]
+      ]
+    ]
+
     children = [
+      {Cluster.Supervisor,  [topologies, [name: Chat.ClusterSupervisor]]},
+
+      #Horde Supervisor and Registry
+      Chat.ChatSupervisor,
+      Chat.ChatRegistry,
+
+      # {Chat.Cluster.Tracker, []},
       # Start the Telemetry supervisor
       ChatWeb.Telemetry,
       # Start the PubSub system

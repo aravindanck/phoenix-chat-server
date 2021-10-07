@@ -1,11 +1,18 @@
 defmodule ChatWeb.RoomLive do
   use ChatWeb, :live_view
+  alias Chat.ChatServer
+
   require Logger
 
   @impl true
   def mount(%{"id" => room_id}, _session, socket) do
     topic = "room:" <> room_id
     username = MnemonicSlugs.generate_slug(2)
+
+    {:ok, messages} = ChatServer.get_room(room_id)
+
+    self_node = inspect node()
+    connected_nodes = inspect Node.list()
 
     if connected?(socket) do
       ChatWeb.Endpoint.subscribe(topic)
@@ -17,9 +24,11 @@ defmodule ChatWeb.RoomLive do
       topic: topic,
       username: username,
       message: "",
-      messages: [],
+      messages: messages,
       user_list: [],
-      temporary_assigns: [messages: []]
+      temporary_assigns: [messages: []],
+      node: self_node,
+      connected_nodes: connected_nodes
     )}
   end
 
@@ -27,6 +36,7 @@ defmodule ChatWeb.RoomLive do
   def handle_event("submit_message", %{"chat" => %{"message" => message}}, socket) do
     Logger.info(message: message)
     message = %{uuid: UUID.uuid4(), username: socket.assigns.username, content: message}
+    ChatServer.add_messages(socket.assigns.room_id, [message])
     ChatWeb.Endpoint.broadcast(socket.assigns.topic, "new-message", message)
     {:noreply, assign(socket, message: "")}
   end
@@ -39,7 +49,14 @@ defmodule ChatWeb.RoomLive do
 
   @impl true
   def handle_info(%{event: "new-message", payload: message}, socket) do
-    {:noreply, assign(socket, messages: [message])}
+    self_node = inspect node()
+    connected_nodes = inspect Node.list()
+
+    {:noreply, assign(socket,
+        messages: [message],
+        node: self_node,
+        connected_nodes: connected_nodes
+    )}
   end
 
   @impl true
@@ -49,7 +66,6 @@ defmodule ChatWeb.RoomLive do
     |> Map.keys()
     |> Enum.map(fn username -> %{uuid: UUID.uuid4(), content: "#{username} joined", type: :system} end)
 
-
     leave_messages = leaves
     |> Map.keys()
     |> Enum.map(fn username -> %{uuid: UUID.uuid4(), content: "#{username} left", type: :system} end)
@@ -57,6 +73,8 @@ defmodule ChatWeb.RoomLive do
     user_list = ChatWeb.Presence.list(socket.assigns.topic)
     |> Map.keys()
     Logger.info(user_list: user_list)
+
+    ChatServer.add_messages(socket.assigns.room_id, join_messages ++ leave_messages)
 
     {:noreply, assign(socket, messages: join_messages ++ leave_messages, user_list: user_list)}
   end

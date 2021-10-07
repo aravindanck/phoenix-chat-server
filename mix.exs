@@ -45,7 +45,9 @@ defmodule Chat.MixProject do
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
       {:mnemonic_slugs, "~> 0.0.3"},
-      {:uuid, "~> 1.1"}
+      {:uuid, "~> 1.1"},
+      {:libcluster, "~> 3.3"},
+      {:horde, "~> 0.8.4"}
     ]
   end
 
