@@ -15,7 +15,21 @@ defmodule Chat.ChatServer do
   def init(room_id) do
     Logger.info("Creating chat room server for #{room_id}")
     Process.flag(:trap_exit, true)
-    {:ok, %{messages: []}}
+
+    messages = Chat.StateHandoff.pickup(room_id)
+    Logger.info("Messages picked from handoff genserver")
+    Logger.info("#{inspect messages, charlists: :as_lists}")
+
+    messages = if is_nil(messages) do
+      []
+    else
+      Logger.info("******", is_list(messages))
+      messages
+    end
+
+    Logger.info("Pickup result from crdt #{messages}")
+
+    {:ok, %{room_id: room_id, messages: messages}}
   end
 
   @spec via_tuple(String.t()) :: {:via, Horde.Registry, {ChatRegistry, String.t()}}
@@ -29,8 +43,7 @@ defmodule Chat.ChatServer do
 
   @spec add_messages(String.t(), List.t()) :: {:ok, List.t()}
   def add_messages(room_id, new_messages) do
-    Logger.info("To room_id #{room_id} add ")
-    Logger.info(new_messages)
+    Logger.info("To room_id #{room_id} add #{inspect new_messages}")
     {:ok, messages} = call_by_name(room_id, {:add_messages, new_messages})
     {:ok, messages}
   end
@@ -57,14 +70,29 @@ defmodule Chat.ChatServer do
   end
 
   def room_pid(room_id) do
+    room_pid = room_id
+    |> via_tuple()
+    |>  GenServer.whereis()
+
+    if not is_pid(room_pid) do
+      Logger.info("Chat room gen server not found! #{room_id}. Creating new")
+
+      messages = Chat.StateHandoff.pickup(room_id)
+      Logger.info("Pickup result from crdt #{messages}")
+
+      Chat.ChatSupervisor.start_room(room_id)
+    end
+
     room_id
     |> via_tuple()
     |>  GenServer.whereis()
+
   end
 
   @impl GenServer
   def handle_info({:EXIT, _pid, reason}, state) do
     Logger.info(":EXIT received - Reason: #{inspect(reason)} and State: #{inspect(state)}")
+    save_state(state)
     {:stop, reason, state}
   end
 
@@ -72,9 +100,16 @@ defmodule Chat.ChatServer do
   When shutdown is issued, state is saved here for other nodes to utilize
   """
   @impl true
-  def terminate(reason, state) do
+  def terminate(reason, _state) do
     Logger.warn("Horde dynamicsupervisor in #{Node.self()} has initiated shut down.")
-    Logger.info("Reason: #{inspect(reason)} and State: #{inspect(state)}")
-    #TODO: Save state
+    # messages = Chat.StateHandoff.pickup(state.room_id)
+    # Logger.info("Pickup result from crdt #{messages}")
+    Logger.info("Reason: #{inspect(reason)}")
+  end
+
+  def save_state(state) do
+    room_id = state.room_id
+    Chat.StateHandoff.handoff(room_id, state.messages)
+    {:reply, :ok}
   end
 end

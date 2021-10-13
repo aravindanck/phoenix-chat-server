@@ -19,6 +19,8 @@ defmodule Chat.Application do
     children = [
       {Cluster.Supervisor,  [topologies, [name: Chat.ClusterSupervisor]]},
 
+      {Chat.StateHandoff, []},
+
       #Horde Supervisor and Registry
       Chat.ChatSupervisor,
       Chat.ChatRegistry,
@@ -30,9 +32,29 @@ defmodule Chat.Application do
       {Phoenix.PubSub, name: Chat.PubSub},
       # Start the Endpoint (http/https)
       ChatWeb.Endpoint,
-      ChatWeb.Presence
+      ChatWeb.Presence,
       # Start a worker by calling: Chat.Worker.start_link(arg)
       # {Chat.Worker, arg}
+
+      %{
+        id: Chat.HordeConnector,
+        restart: :transient,
+        start: {
+          Task, :start_link, [
+            fn ->
+              Node.list()
+              |> Enum.each(fn node ->
+                # Horde.Cluster.set_members(Chat.ChatSupervisor, { Chat.ChatSupervisor, node })
+                # Horde.Cluster.set_members(Chat.ChatRegistry, { Chat.ChatRegistry, node })
+
+                # add this line below
+                :ok = Chat.StateHandoff.join(node)
+              end)
+            end
+          ]
+        }
+      }
+
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

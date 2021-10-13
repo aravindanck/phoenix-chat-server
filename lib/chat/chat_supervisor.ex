@@ -24,12 +24,10 @@ defmodule Chat.ChatSupervisor do
     []
   end
 
-  @spec start_room(String.t()) :: {:ok, pid()} | {:error, {:already_started, pid()}}
   def start_room(room_id) do
     child_spec = %{
       id: room_id,
-      start: {ChatServer, :start_link, [room_id]},
-      restart: :transient
+      start: {ChatServer, :start_link, [room_id]}
     }
 
     Logger.info("Starting Chat Room with room_id #{room_id}")
