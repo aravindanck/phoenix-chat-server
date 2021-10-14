@@ -44,8 +44,7 @@ defmodule Chat.Application do
             fn ->
               Node.list()
               |> Enum.each(fn node ->
-                # Horde.Cluster.set_members(Chat.ChatSupervisor, { Chat.ChatSupervisor, node })
-                # Horde.Cluster.set_members(Chat.ChatRegistry, { Chat.ChatRegistry, node })
+                Horde.Cluster.set_members(Chat.ChatSupervisor, [{Chat.ChatSupervisor, node}])
 
                 # add this line below
                 :ok = Chat.StateHandoff.join(node)

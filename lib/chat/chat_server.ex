@@ -23,11 +23,10 @@ defmodule Chat.ChatServer do
     messages = if is_nil(messages) do
       []
     else
-      Logger.info("******", is_list(messages))
       messages
     end
 
-    Logger.info("Pickup result from crdt #{messages}")
+    Logger.info("Pickup result from crdt #{inspect messages, charlists: :as_lists}")
 
     {:ok, %{room_id: room_id, messages: messages}}
   end
@@ -74,18 +73,17 @@ defmodule Chat.ChatServer do
     |> via_tuple()
     |>  GenServer.whereis()
 
-    if not is_pid(room_pid) do
+    if is_pid(room_pid) do
+      room_pid
+    else
       Logger.info("Chat room gen server not found! #{room_id}. Creating new")
 
       messages = Chat.StateHandoff.pickup(room_id)
-      Logger.info("Pickup result from crdt #{messages}")
+      Logger.info("Pickup result from crdt #{inspect messages}")
 
-      Chat.ChatSupervisor.start_room(room_id)
+      {:ok, pid} = Chat.ChatSupervisor.start_room(room_id)
+      pid
     end
-
-    room_id
-    |> via_tuple()
-    |>  GenServer.whereis()
 
   end
 
