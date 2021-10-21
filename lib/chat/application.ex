@@ -8,10 +8,11 @@ defmodule Chat.Application do
   def start(_type, _args) do
     topologies = [
       k8s_chat: [
-        strategy: Cluster.Strategy.Kubernetes.DNS,
+        strategy: Elixir.Cluster.Strategy.Kubernetes.DNS,
         config: [
-          service: "chat-svc",
-          application_name: "chat"
+          service: "chat-svc-headless",
+          application_name: "chat",
+          polling_interval: 3_000
         ]
       ]
     ]
@@ -19,7 +20,7 @@ defmodule Chat.Application do
     children = [
       {Cluster.Supervisor,  [topologies, [name: Chat.ClusterSupervisor]]},
 
-      {Chat.StateHandoff, []},
+      Chat.StateHandoff,
 
       #Horde Supervisor and Registry
       Chat.ChatSupervisor,
@@ -42,11 +43,10 @@ defmodule Chat.Application do
         start: {
           Task, :start_link, [
             fn ->
+              # Sleep for 5 seconds to have handoff process start in all nodes
+              Process.sleep(3_000)
               Node.list()
               |> Enum.each(fn node ->
-                Horde.Cluster.set_members(Chat.ChatSupervisor, [{Chat.ChatSupervisor, node}])
-
-                # add this line below
                 :ok = Chat.StateHandoff.join(node)
               end)
             end

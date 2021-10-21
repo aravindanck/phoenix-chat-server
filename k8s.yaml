@@ -14,9 +14,10 @@ spec:
       labels:
         app: chat
     spec:
+      terminationGracePeriodSeconds: 60
       containers:
       - name: phoenix-chat
-        image: phoenix-chat:v1.3
+        image: phoenix-chat:v1.5
         ports:
         - containerPort: 4000
         env:
@@ -52,7 +53,7 @@ kind: Service
 apiVersion: v1
 
 metadata:
-  name: chat-svc
+  name: chat-svc-headless
   namespace: default
 spec:
   clusterIP: None

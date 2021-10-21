@@ -78,8 +78,8 @@ defmodule Chat.ChatServer do
     else
       Logger.info("Chat room gen server not found! #{room_id}. Creating new")
 
-      messages = Chat.StateHandoff.pickup(room_id)
-      Logger.info("Pickup result from crdt #{inspect messages}")
+      # messages = Chat.StateHandoff.pickup(room_id)
+      # Logger.info("Pickup result from crdt #{inspect messages}")
 
       {:ok, pid} = Chat.ChatSupervisor.start_room(room_id)
       pid
@@ -99,9 +99,12 @@ defmodule Chat.ChatServer do
   """
   @impl true
   def terminate(reason, _state) do
-    Logger.warn("Horde dynamicsupervisor in #{Node.self()} has initiated shut down.")
+    Logger.warn("Horde dynamicsupervisor in #{Node.self()} has initiated shut down. Sleeping for handoff")
     # messages = Chat.StateHandoff.pickup(state.room_id)
     # Logger.info("Pickup result from crdt #{messages}")
+    # Sleeping for handoff to complete
+    Process.sleep(10_000)
+    Logger.info("Sleep complete. Exiting.")
     Logger.info("Reason: #{inspect(reason)}")
   end
 

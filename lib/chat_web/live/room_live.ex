@@ -62,21 +62,22 @@ defmodule ChatWeb.RoomLive do
   @impl true
   def handle_info(%{event: "presence_diff", payload: %{joins: joins, leaves: leaves}, topic: topic}, socket) do
     Logger.info(joins: joins, leaves: leaves, topic: topic)
-    join_messages = joins
-    |> Map.keys()
-    |> Enum.map(fn username -> %{uuid: UUID.uuid4(), content: "#{username} joined", type: :system} end)
+    # join_messages = joins
+    # |> Map.keys()
+    # |> Enum.map(fn username -> %{uuid: UUID.uuid4(), content: "#{username} joined", type: :system} end)
 
-    leave_messages = leaves
-    |> Map.keys()
-    |> Enum.map(fn username -> %{uuid: UUID.uuid4(), content: "#{username} left", type: :system} end)
+    # leave_messages = leaves
+    # |> Map.keys()
+    # |> Enum.map(fn username -> %{uuid: UUID.uuid4(), content: "#{username} left", type: :system} end)
 
     user_list = ChatWeb.Presence.list(socket.assigns.topic)
     |> Map.keys()
     Logger.info(user_list: user_list)
 
-    ChatServer.add_messages(socket.assigns.room_id, join_messages ++ leave_messages)
+    # ChatServer.add_messages(socket.assigns.room_id, join_messages ++ leave_messages)
 
-    {:noreply, assign(socket, messages: join_messages ++ leave_messages, user_list: user_list)}
+    # Removing joining/left messages out for now.
+    {:noreply, assign(socket, user_list: user_list)}
   end
 
   @spec display_message(%{:content => any, :uuid => any, optional(any) => any}) :: {:safe, [...]}

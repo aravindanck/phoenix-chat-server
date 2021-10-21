@@ -35,7 +35,7 @@ defmodule Chat.StateHandoff do
   def init(_opts) do
     # custom config for aggressive CRDT sync
     { :ok, crdt_pid } = DeltaCrdt.start_link(DeltaCrdt.AWLWWMap,
-                                             sync_interval: 3)
+                                             sync_interval: 100)
     { :ok, crdt_pid}
   end
 
@@ -76,8 +76,8 @@ defmodule Chat.StateHandoff do
     messages = DeltaCrdt.get(crdt_pid, room_id, 5000)
 
     Logger.warn("Picked up #{inspect messages, charlists: :as_lists} for #{room_id}")
-    # TODO: remove when picked up, this is a temporary storage and not meant to be used
-    #  in any implementation beyond restarting of cross Pod processes
+    # Remove when picked up, this is a temporary storage and not meant to be used
+    DeltaCrdt.delete(crdt_pid, room_id)
 
     { :reply, messages, crdt_pid }
   end
