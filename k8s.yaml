@@ -17,7 +17,7 @@ spec:
       terminationGracePeriodSeconds: 60
       containers:
       - name: phoenix-chat
-        image: phoenix-chat:v1.5
+        image: phoenix-chat:v1.6
         ports:
         - containerPort: 4000
         env:

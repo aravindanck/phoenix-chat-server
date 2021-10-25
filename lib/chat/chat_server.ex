@@ -103,7 +103,7 @@ defmodule Chat.ChatServer do
     # messages = Chat.StateHandoff.pickup(state.room_id)
     # Logger.info("Pickup result from crdt #{messages}")
     # Sleeping for handoff to complete
-    Process.sleep(10_000)
+    Process.sleep(30_000)
     Logger.info("Sleep complete. Exiting.")
     Logger.info("Reason: #{inspect(reason)}")
   end
