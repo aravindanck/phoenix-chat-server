@@ -36,7 +36,7 @@ Multiple users can join to the chat room via the room URL. http://<hostname:port
 
 
 ## References
-libcluster - https://github.com/bitwalker/libcluster
-horde - https://github.com/derekkraan/horde
-DeltaCRDT - https://github.com/derekkraan/delta_crdt_ex
-Talk by Daniel Azuma - https://www.youtube.com/watch?v=nLApFANtkHs
+  * libcluster - https://github.com/bitwalker/libcluster
+  * horde - https://github.com/derekkraan/horde
+  * DeltaCRDT - https://github.com/derekkraan/delta_crdt_ex
+  * Talk by Daniel Azuma - https://www.youtube.com/watch?v=nLApFANtkHs
