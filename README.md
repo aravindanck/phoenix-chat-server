@@ -16,7 +16,7 @@ In order for the supervisor to be able to supervise processes across the dynamic
 ## Distributed State Management and State Handoff
 In a distributed deployment, nodes could be transient. Since the applications run inside nodes, they could be transient too. The state of the chat rooms (messages) are maintained in-memory and a handoff is done when a replica containing the state goes down because of node shutdown. Conflict-free Replicated Data Type (CRDTs) are used for replicating and distributing data across the available replicas.
 
-To start your Phoenix Chat server:
+## To start your Phoenix Chat server:
 
   * Install dependencies with `mix deps.get`
   * Install Node.js dependencies with `npm install` inside the `assets` directory
